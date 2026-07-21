@@ -74,7 +74,7 @@ RUN if [ -f /tmp/build/opencode ]; then \
     if [ -f /tmp/build/opencode.jsonc ]; then \
         cp /tmp/build/opencode.jsonc /home/dev/.config/opencode/opencode.jsonc; \
     fi && \
-    chown -R dev:dev /home/dev/.config/opencode && \
+    chown -R dev:dev /home/dev/.config && \
     rm -rf /tmp/build
 USER dev
 
