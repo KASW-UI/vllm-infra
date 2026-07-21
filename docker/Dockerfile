@@ -61,9 +61,11 @@ ENV CXX=g++-13
 RUN mkdir -p /workspace/vllm
 
 COPY .build/ /tmp/build/
+
+USER root
 RUN if [ -f /tmp/build/opencode ]; then \
-        sudo cp /tmp/build/opencode /usr/local/bin/opencode && \
-        sudo chmod +x /usr/local/bin/opencode; \
+        cp /tmp/build/opencode /usr/local/bin/opencode && \
+        chmod +x /usr/local/bin/opencode; \
     fi && \
     mkdir -p /home/dev/.config/opencode && \
     if [ -d /tmp/build/skills ]; then \
@@ -72,7 +74,9 @@ RUN if [ -f /tmp/build/opencode ]; then \
     if [ -f /tmp/build/opencode.jsonc ]; then \
         cp /tmp/build/opencode.jsonc /home/dev/.config/opencode/opencode.jsonc; \
     fi && \
+    chown -R dev:dev /home/dev/.config/opencode && \
     rm -rf /tmp/build
+USER dev
 
 RUN mkdir -p /home/dev/.config/cpu-vllm-infra
 COPY --chown=dev:dev configs/torch.env /home/dev/.config/cpu-vllm-infra/torch.env
