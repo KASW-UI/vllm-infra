@@ -15,16 +15,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    ca-certificates curl wget software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc-13 g++-13 \
+    ca-certificates curl wget \
+    gcc-12 g++-12 \
     make git git-lfs \
     ninja-build \
-    python3.12 python3.12-venv python3.12-dev \
     libssl-dev libffi-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev \
+    liblzma-dev tk-dev libncursesw5-dev \
+    libgdbm-dev libnss3-dev \
     libnuma-dev libtcmalloc-minimal4 numactl \
     ffmpeg libsm6 libxext6 libgl1 \
     vim tmux htop btop \
@@ -33,10 +31,22 @@ RUN apt-get update && \
     openssh-client sudo \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 && \
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 && \
     update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 100 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 100
+
+RUN curl -fsSL https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz -o /tmp/python.tar.xz && \
+    cd /tmp && tar -xf python.tar.xz && cd Python-${PYTHON_VERSION} && \
+    ./configure --enable-optimizations --prefix=/usr/local && \
+    make -j$(nproc) && make altinstall && \
+    rm -rf /tmp/Python-${PYTHON_VERSION} /tmp/python.tar.xz
+
+RUN ln -sf /usr/local/bin/python$(echo ${PYTHON_VERSION} | cut -d. -f1,2) /usr/local/bin/python3 && \
+    ln -sf /usr/local/bin/python3 /usr/local/bin/python
+
+RUN update-alternatives --install /usr/bin/python python /usr/local/bin/python3 100 && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3 100
 
 RUN userdel -r ubuntu 2>/dev/null || true && \
     groupadd -g 1000 dev 2>/dev/null || true && \
@@ -47,7 +57,7 @@ USER dev
 ENV HOME=/home/dev
 WORKDIR /workspace
 
-RUN python3.12 -m venv /workspace/.venv
+RUN python3 -m venv /workspace/.venv
 ENV PATH="/workspace/.venv/bin:${PATH}"
 
 RUN pip install --upgrade pip setuptools wheel
@@ -89,8 +99,8 @@ USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh
 USER dev
 
-ENV CC=gcc-13
-ENV CXX=g++-13
+ENV CC=gcc-12
+ENV CXX=g++-12
 ENV PATH="/usr/local/bin:${PATH}"
 ENV SHELL=/bin/zsh
 
