@@ -1,5 +1,5 @@
-ARG UBUNTU_VERSION=24.04
-ARG PYTHON_VERSION=3.12.10
+ARG UBUNTU_VERSION=22.04
+ARG PYTHON_VERSION=3.12.13
 ARG TORCH_VERSION=2.11.0
 
 FROM ubuntu:${UBUNTU_VERSION}
@@ -15,8 +15,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    ca-certificates curl wget \
-    gcc-12 g++-12 \
+    ca-certificates curl wget software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc-13 g++-13 \
     make git git-lfs \
     ninja-build \
     python3.12 python3.12-venv python3.12-dev \
@@ -25,17 +29,18 @@ RUN apt-get update && \
     ffmpeg libsm6 libxext6 libgl1 \
     vim tmux htop btop \
     jq ripgrep fd-find bat fzf \
+    zsh \
     openssh-client sudo \
     && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 100 && \
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100 && \
     update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 100 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 100
 
 RUN userdel -r ubuntu 2>/dev/null || true && \
     groupadd -g 1000 dev 2>/dev/null || true && \
-    useradd -m -u 1000 -g dev -s /bin/bash dev && \
+    useradd -m -u 1000 -g dev -s /bin/zsh dev && \
     echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER dev
@@ -57,10 +62,19 @@ RUN pip install --no-cache-dir -r /tmp/requirements.lock \
 COPY --chown=dev:dev .build/vllm /workspace/vllm
 RUN pip install --no-cache-dir -e /workspace/vllm --no-build-isolation
 
-COPY --chown=dev:dev .build/opencode /usr/local/bin/opencode
-RUN mkdir -p /home/dev/.config/opencode
-COPY --chown=dev:dev .build/skills/ /home/dev/.config/opencode/skills/
-COPY --chown=dev:dev .build/opencode.jsonc /home/dev/.config/opencode/opencode.jsonc
+COPY .build/ /tmp/build/
+RUN if [ -f /tmp/build/opencode ]; then \
+        sudo cp /tmp/build/opencode /usr/local/bin/opencode && \
+        sudo chmod +x /usr/local/bin/opencode; \
+    fi && \
+    mkdir -p /home/dev/.config/opencode && \
+    if [ -d /tmp/build/skills ]; then \
+        cp -r /tmp/build/skills/ /home/dev/.config/opencode/skills/; \
+    fi && \
+    if [ -f /tmp/build/opencode.jsonc ]; then \
+        cp /tmp/build/opencode.jsonc /home/dev/.config/opencode/opencode.jsonc; \
+    fi && \
+    rm -rf /tmp/build
 
 RUN mkdir -p /home/dev/.config/cpu-vllm-infra
 COPY --chown=dev:dev configs/torch.env /home/dev/.config/cpu-vllm-infra/torch.env
@@ -75,9 +89,12 @@ USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh
 USER dev
 
-ENV CC=gcc-12
-ENV CXX=g++-12
+ENV CC=gcc-13
+ENV CXX=g++-13
 ENV PATH="/usr/local/bin:${PATH}"
+ENV SHELL=/bin/zsh
+
+COPY --chown=dev:dev config/.zshrc /home/dev/.zshrc
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["bash"]
+CMD ["zsh"]

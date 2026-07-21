@@ -1,6 +1,6 @@
 services:
   vllm-dev:
-    image: ${IMAGE_NAME:-cpu-vllm-infra}:${IMAGE_TAG:-ubuntu24.04-torch2.11.0}
+    image: ${IMAGE_NAME:-cpu-vllm-infra}:${IMAGE_TAG:-ubuntu22.04-torch2.11.0}
     container_name: cpu-vllm-infra-dev
     env_file:
       - ../../configs/torch.env

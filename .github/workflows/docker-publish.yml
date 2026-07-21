@@ -56,38 +56,42 @@ jobs:
           git clone --depth 1 https://github.com/vllm-project/vllm.git .build/vllm
 
           echo "==> Downloading opencode v${{ steps.versions.outputs.OPENCODE_VERSION }}..."
-          OPENCODE_VER="${{ steps.versions.outputs.OPENCODE_VERSION }}"
+          VER="${{ steps.versions.outputs.OPENCODE_VERSION }}"
           FOUND=false
-          for URL in \
-            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
-            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64" \
-            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode" \
-            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
-            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64" \
-            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode"; do
-            echo "  Trying: $URL"
-            if curl -fSL -o .build/opencode "$URL" 2>/dev/null; then
+
+          download() {
+            local url="$1"
+            echo "  Trying: $url"
+            curl -fSL --retry 2 -o .build/opencode "$url" 2>/dev/null && return 0
+            return 1
+          }
+
+          for url in \
+            "https://github.com/opencode-ai/opencode/releases/download/v${VER}/opencode-linux-amd64" \
+            "https://github.com/opencode-ai/opencode/releases/download/v${VER}/opencode-linux-x64" \
+            "https://github.com/anomalyco/opencode/releases/download/v${VER}/opencode-linux-amd64" \
+            "https://github.com/anomalyco/opencode/releases/download/v${VER}/opencode-linux-x64"; do
+            if download "$url"; then
+              chmod +x .build/opencode
               FOUND=true
-              echo "  -> OK"
               break
             fi
           done
-          if $FOUND; then
-            chmod +x .build/opencode
-          else
-            echo "  -> All URLs failed, creating opencode placeholder"
-            echo '#!/bin/bash' > .build/opencode
-            echo 'echo "opencode not available in CI image"' >> .build/opencode
-            chmod +x .build/opencode
+
+          if ! $FOUND; then
+            echo "  Trying npm install..."
+            npm install -g opencode 2>/dev/null && FOUND=true && cp $(which opencode) .build/opencode || true
+            npm install -g @opencode-ai/cli 2>/dev/null && FOUND=true && cp $(which opencode) .build/opencode || true
           fi
 
-          echo "==> Creating opencode config..."
-          mkdir -p .build/skills
-          echo '{"$schema":"https://opencode.ai/config.json"}' > .build/opencode.jsonc
+          if $FOUND; then
+            echo "  -> opencode downloaded"
+          else
+            echo "  -> opencode not available, will be skipped in image"
+          fi
 
           echo "==> .build/ contents:"
           ls -la .build/
-          ls -la .build/skills/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

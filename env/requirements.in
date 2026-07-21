@@ -1,36 +1,36 @@
 --index-url https://download.pytorch.org/whl/cpu
 
 # Build
-cmake>=3.26.1
-ninja
-packaging>=24.2
+cmake==3.31.10
+ninja==1.13.0
+packaging==26.2
 setuptools==77.0.3
-setuptools-scm>=8
-setuptools-rust>=1.9.0
-wheel
-jinja2>=3.1.6
-regex
+setuptools-scm==10.2.0
+setuptools-rust==1.13.0
+wheel==0.47.0
+jinja2==3.1.6
+regex==2026.7.19
 
 # Core
 torch==2.11.0+cpu
 intel-openmp==2024.2.1
-numpy
-py-cpuinfo
+numpy==2.3.5
+py-cpuinfo==9.0.0
 
 # Serving
-transformers>=5.5.3
-safetensors>=0.6.2
-fastapi>=0.133.0
-sentencepiece
-tiktoken>=0.6.0
+transformers==5.14.1
+safetensors==0.8.0
+fastapi==0.136.3
+sentencepiece==0.2.2
+tiktoken==0.13.0
 numba==0.65.0
 compressed-tensors==0.17.0
-xgrammar>=0.2.1
+xgrammar==0.2.3
 
 # Dev
-ipython
-jupyterlab
-pytest
-black
-ruff
-mypy
+ipython==9.15.0
+jupyterlab==4.6.1
+pytest==9.1.1
+black==26.5.1
+ruff==0.15.20
+mypy==2.1.0
