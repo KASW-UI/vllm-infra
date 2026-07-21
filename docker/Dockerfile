@@ -54,7 +54,15 @@ RUN pip install --no-cache-dir -r /tmp/requirements.lock \
     --index-url https://download.pytorch.org/whl/cpu \
     --extra-index-url https://pypi.org/simple
 
-RUN mkdir -p /workspace/vllm /home/dev/.config/cpu-vllm-infra
+COPY --chown=dev:dev .build/vllm /workspace/vllm
+RUN pip install --no-cache-dir -e /workspace/vllm --no-build-isolation
+
+COPY --chown=dev:dev .build/opencode /usr/local/bin/opencode
+RUN mkdir -p /home/dev/.config/opencode
+COPY --chown=dev:dev .build/skills/ /home/dev/.config/opencode/skills/
+COPY --chown=dev:dev .build/opencode.jsonc /home/dev/.config/opencode/opencode.jsonc
+
+RUN mkdir -p /home/dev/.config/cpu-vllm-infra
 COPY --chown=dev:dev configs/torch.env /home/dev/.config/cpu-vllm-infra/torch.env
 COPY --chown=dev:dev configs/vllm.env /home/dev/.config/cpu-vllm-infra/vllm.env
 COPY --chown=dev:dev configs/docker.env /home/dev/.config/cpu-vllm-infra/docker.env
@@ -69,6 +77,7 @@ USER dev
 
 ENV CC=gcc-12
 ENV CXX=g++-12
+ENV PATH="/usr/local/bin:${PATH}"
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["bash"]

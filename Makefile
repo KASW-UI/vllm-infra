@@ -1,4 +1,4 @@
-.PHONY: build pull run shell verify healthcheck snapshot serve bench stop logs clean lock compose-up compose-down
+.PHONY: build pull run shell verify healthcheck snapshot serve bench stop logs clean lock open-code
 
 include env/versions.env
 export
@@ -11,7 +11,19 @@ DOCKERFILE   := docker/Dockerfile
 COMPOSE_FILE := deploy/docker/docker-compose.yml
 CONTEXT      := .
 
+VLLM_SRC    ?= /home/kasw/文档/GitHub/GPU-Project/vllm
+OPENCODE_BIN ?= /home/kasw/.opencode/bin/opencode
+OPENCODE_CFG ?= /home/kasw/.config/opencode
+
 build:
+	@echo "==> Preparing external files..."
+	@mkdir -p .build
+	@echo "==> Copying vllm source from $(VLLM_SRC)..."
+	cp -r $(VLLM_SRC) .build/vllm
+	@echo "==> Copying opencode..."
+	cp $(OPENCODE_BIN) .build/opencode
+	cp -r $(OPENCODE_CFG)/skills .build/skills
+	cp $(OPENCODE_CFG)/opencode.jsonc .build/opencode.jsonc
 	@echo "==> Building $(IMAGE_NAME):$(IMAGE_TAG)"
 	docker build \
 		--build-arg UBUNTU_VERSION=$(UBUNTU_VERSION) \
@@ -35,6 +47,8 @@ build:
 			docker_version: .DockerVersion, \
 			size: .Size \
 		}' > manifest.json
+	@echo "==> Cleaning up .build..."
+	@rm -rf .build
 	@echo "==> Build complete"
 	@cat manifest.json
 
@@ -67,6 +81,9 @@ serve:
 bench:
 	docker compose -f $(COMPOSE_FILE) exec vllm-dev bash /workspace/scripts/bench.sh
 
+open-code:
+	docker compose -f $(COMPOSE_FILE) exec vllm-dev opencode
+
 stop:
 	docker compose -f $(COMPOSE_FILE) down
 
@@ -75,7 +92,7 @@ logs:
 
 clean:
 	docker compose -f $(COMPOSE_FILE) down -v --rmi local 2>/dev/null || true
-	rm -f manifest.json
+	rm -rf .build manifest.json
 
 lock:
 	@echo "==> Generating requirements.lock"
