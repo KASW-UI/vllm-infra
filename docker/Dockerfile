@@ -14,22 +14,25 @@ LABEL torch="${TORCH_VERSION}+cpu"
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get update && \
     apt-get install -y --no-install-recommends \
+    ca-certificates curl wget software-properties-common
+
+RUN add-apt-repository -y ppa:deadsnakes/ppa && apt-get update
+
+RUN apt-get install -y --no-install-recommends \
     gcc-12 g++-12 \
-    ninja-build \
     make git git-lfs \
-    curl wget ca-certificates \
-    libnuma-dev libtcmalloc-minimal4 numactl \
+    ninja-build \
     python3.12 python3.12-venv python3.12-dev \
+    libssl-dev libffi-dev zlib1g-dev \
+    libnuma-dev libtcmalloc-minimal4 numactl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg libsm6 libxext6 libgl1 \
     vim tmux htop btop \
     jq ripgrep fd-find bat fzf \
-    libssl-dev libffi-dev zlib1g-dev \
-    openssh-client \
-    sudo \
+    openssh-client sudo \
     && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 && \
