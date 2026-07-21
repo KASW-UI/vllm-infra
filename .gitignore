@@ -1,0 +1,7 @@
+runtime/
+manifest.json
+*.pyc
+__pycache__/
+*.egg-info/
+.DS_Store
+.idea/

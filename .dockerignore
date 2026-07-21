@@ -1,0 +1,13 @@
+runtime/
+logs/
+snapshots/
+install/
+src/
+runtime/
+.venv/
+.git
+.DS_Store
+*.pyc
+__pycache__
+*.egg-info
+.idea/

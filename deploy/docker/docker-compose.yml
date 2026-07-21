@@ -1,0 +1,25 @@
+services:
+  vllm-dev:
+    image: ${IMAGE_NAME:-cpu-vllm-infra}:${IMAGE_TAG:-ubuntu22.04-torch2.11.0}
+    container_name: cpu-vllm-infra-dev
+    env_file:
+      - ../../configs/torch.env
+      - ../../configs/vllm.env
+    shm_size: 4gb
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    volumes:
+      - /home/kasw/文档/GitHub/GPU-Project/vllm:/workspace/vllm
+      - ~/.cache/huggingface:/home/dev/.cache/huggingface
+      - ../../src:/workspace/src
+      - ../../scripts:/workspace/scripts
+      - ../../runtime/logs:/workspace/logs
+      - ../../runtime/snapshots:/workspace/snapshots
+      - ~/.gitconfig:/home/dev/.gitconfig:ro
+      - ~/.ssh:/home/dev/.ssh:ro
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true
+    user: "1000:1000"
