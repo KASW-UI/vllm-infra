@@ -48,6 +48,27 @@ jobs:
           echo "version=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "sha=${SHA_TAG}" >> "$GITHUB_OUTPUT"
 
+      - name: Prepare .build directory
+        run: |
+          mkdir -p .build
+
+          echo "==> Cloning vllm source..."
+          git clone --depth 1 https://github.com/vllm-project/vllm.git .build/vllm
+
+          echo "==> Downloading opencode v${{ steps.versions.outputs.OPENCODE_VERSION }}..."
+          OPENCODE_URL="https://github.com/anomalyco/opencode/releases/download/v${{ steps.versions.outputs.OPENCODE_VERSION }}/opencode-linux-x64"
+          curl -fSL -o .build/opencode "$OPENCODE_URL" \
+            || curl -fSL -o .build/opencode "https://github.com/anomalyco/opencode/releases/download/v${{ steps.versions.outputs.OPENCODE_VERSION }}/opencode"
+          chmod +x .build/opencode
+
+          echo "==> Creating opencode config..."
+          mkdir -p .build/skills
+          echo '{"$schema":"https://opencode.ai/config.json"}' > .build/opencode.jsonc
+
+          echo "==> .build/ contents:"
+          ls -la .build/
+          ls -la .build/skills/
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -94,6 +115,7 @@ jobs:
               python -c 'import cmake; print(cmake.__version__)'
               python -c 'import transformers; print(transformers.__version__)'
               python -c 'import fastapi; print(fastapi.__version__)'
+              python -c 'import vllm; print(vllm.__version__)'
             "
 
       - name: Smoke test — verify.sh
