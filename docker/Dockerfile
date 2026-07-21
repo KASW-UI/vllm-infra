@@ -1,4 +1,4 @@
-ARG UBUNTU_VERSION=22.04
+ARG UBUNTU_VERSION=24.04
 ARG PYTHON_VERSION=3.12.10
 ARG TORCH_VERSION=2.11.0
 
@@ -15,20 +15,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    ca-certificates curl wget software-properties-common
-
-RUN add-apt-repository -y ppa:deadsnakes/ppa && apt-get update
-
-RUN apt-get install -y --no-install-recommends \
+    ca-certificates curl wget \
     gcc-12 g++-12 \
     make git git-lfs \
     ninja-build \
     python3.12 python3.12-venv python3.12-dev \
     libssl-dev libffi-dev zlib1g-dev \
     libnuma-dev libtcmalloc-minimal4 numactl \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg libsm6 libxext6 libgl1 \
     vim tmux htop btop \
     jq ripgrep fd-find bat fzf \
