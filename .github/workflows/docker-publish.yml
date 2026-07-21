@@ -52,9 +52,6 @@ jobs:
         run: |
           mkdir -p .build
 
-          echo "==> Cloning vllm source..."
-          git clone --depth 1 https://github.com/vllm-project/vllm.git .build/vllm
-
           echo "==> Downloading opencode v${{ steps.versions.outputs.OPENCODE_VERSION }}..."
           VER="${{ steps.versions.outputs.OPENCODE_VERSION }}"
           FOUND=false
@@ -139,7 +136,6 @@ jobs:
               python -c 'import cmake; print(cmake.__version__)'
               python -c 'import transformers; print(transformers.__version__)'
               python -c 'import fastapi; print(fastapi.__version__)'
-              python -c 'import vllm; print(vllm.__version__)'
             "
 
       - name: Smoke test — verify.sh

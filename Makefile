@@ -11,15 +11,12 @@ DOCKERFILE   := docker/Dockerfile
 COMPOSE_FILE := deploy/docker/docker-compose.yml
 CONTEXT      := .
 
-VLLM_SRC    ?= /home/kasw/文档/GitHub/GPU-Project/vllm
 OPENCODE_BIN ?= /home/kasw/.opencode/bin/opencode
 OPENCODE_CFG ?= /home/kasw/.config/opencode
 
 build:
 	@echo "==> Preparing external files..."
 	@mkdir -p .build
-	@echo "==> Copying vllm source from $(VLLM_SRC)..."
-	cp -r $(VLLM_SRC) .build/vllm
 	@echo "==> Copying opencode..."
 	cp $(OPENCODE_BIN) .build/opencode
 	cp -r $(OPENCODE_CFG)/skills .build/skills

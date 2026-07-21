@@ -57,12 +57,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements.lock \
 
 ENV CC=gcc-13
 ENV CXX=g++-13
-ENV VLLM_TARGET_DEVICE=cpu
-ENV CMAKE_BUILD_PARALLEL_LEVEL=4
-ENV MAX_JOBS=4
 
-COPY --chown=dev:dev .build/vllm /workspace/vllm
-RUN pip install --no-cache-dir --no-deps -e /workspace/vllm --no-build-isolation
+RUN mkdir -p /workspace/vllm
 
 COPY .build/ /tmp/build/
 RUN if [ -f /tmp/build/opencode ]; then \
