@@ -55,8 +55,14 @@ RUN pip install --no-cache-dir -r /tmp/requirements.lock \
     --index-url https://download.pytorch.org/whl/cpu \
     --extra-index-url https://pypi.org/simple
 
+ENV CC=gcc-13
+ENV CXX=g++-13
+ENV VLLM_TARGET_DEVICE=cpu
+ENV CMAKE_BUILD_PARALLEL_LEVEL=4
+ENV MAX_JOBS=4
+
 COPY --chown=dev:dev .build/vllm /workspace/vllm
-RUN pip install --no-cache-dir -e /workspace/vllm --no-build-isolation
+RUN pip install --no-cache-dir --no-deps -e /workspace/vllm --no-build-isolation
 
 COPY .build/ /tmp/build/
 RUN if [ -f /tmp/build/opencode ]; then \
@@ -85,8 +91,6 @@ USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh
 USER dev
 
-ENV CC=gcc-13
-ENV CXX=g++-13
 ENV PATH="/usr/local/bin:${PATH}"
 ENV SHELL=/bin/zsh
 
