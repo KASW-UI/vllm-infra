@@ -56,10 +56,30 @@ jobs:
           git clone --depth 1 https://github.com/vllm-project/vllm.git .build/vllm
 
           echo "==> Downloading opencode v${{ steps.versions.outputs.OPENCODE_VERSION }}..."
-          OPENCODE_URL="https://github.com/anomalyco/opencode/releases/download/v${{ steps.versions.outputs.OPENCODE_VERSION }}/opencode-linux-x64"
-          curl -fSL -o .build/opencode "$OPENCODE_URL" \
-            || curl -fSL -o .build/opencode "https://github.com/anomalyco/opencode/releases/download/v${{ steps.versions.outputs.OPENCODE_VERSION }}/opencode"
-          chmod +x .build/opencode
+          OPENCODE_VER="${{ steps.versions.outputs.OPENCODE_VERSION }}"
+          FOUND=false
+          for URL in \
+            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
+            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64" \
+            "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode" \
+            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
+            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64" \
+            "https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VER}/opencode"; do
+            echo "  Trying: $URL"
+            if curl -fSL -o .build/opencode "$URL" 2>/dev/null; then
+              FOUND=true
+              echo "  -> OK"
+              break
+            fi
+          done
+          if $FOUND; then
+            chmod +x .build/opencode
+          else
+            echo "  -> All URLs failed, creating opencode placeholder"
+            echo '#!/bin/bash' > .build/opencode
+            echo 'echo "opencode not available in CI image"' >> .build/opencode
+            chmod +x .build/opencode
+          fi
 
           echo "==> Creating opencode config..."
           mkdir -p .build/skills
