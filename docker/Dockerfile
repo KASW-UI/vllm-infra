@@ -33,7 +33,8 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 && \
     update-alternatives --install /usr/bin/cc cc /usr/bin/gcc 100 && \
     update-alternatives --install /usr/bin/c++ c++ /usr/bin/g++ 100
 
-RUN groupadd -g 1000 dev && \
+RUN userdel -r ubuntu 2>/dev/null || true && \
+    groupadd -g 1000 dev 2>/dev/null || true && \
     useradd -m -u 1000 -g dev -s /bin/bash dev && \
     echo 'dev ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
