@@ -19,7 +19,7 @@ REQUEST_RATE="${REQUEST_RATE:-inf}"
 HOST="${HOST:-127.0.0.1}"
 PORT="${PORT:-8000}"
 
-VLLM_SRC="${VLLM_SRC:-/workspace/vllm}"
+VLLM_SRC="${VLLM_SRC:-$HOME/workspace/vllm}"
 BENCH_SCRIPT="$VLLM_SRC/benchmarks/benchmark_serving.py"
 
 echo -e "${BLUE}========================================================${RESET}"
