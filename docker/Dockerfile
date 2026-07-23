@@ -52,8 +52,8 @@ RUN pip install --no-cache-dir cmake>=3.26.1
 COPY --chown=dev:dev env/requirements.lock /tmp/requirements.lock
 
 RUN pip install --no-cache-dir -r /tmp/requirements.lock \
-    --index-url https://mirrors.aliyun.com/pypi/simple/ \
-    --extra-index-url https://download.pytorch.org/whl/cpu
+    --index-url https://download.pytorch.org/whl/cpu \
+    --extra-index-url https://mirrors.aliyun.com/pypi/simple/
 
 ENV CC=gcc-13
 ENV CXX=g++-13
