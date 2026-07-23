@@ -168,7 +168,7 @@ pip install -v --isolated cmake>=3.26.1 --no-deps --progress-bar on --retries 1 
 
 info "Installing Python dependencies (this takes a few minutes)..."
 pip install -v --isolated -r "$SCRIPT_DIR/env/requirements.lock" \
-    --index-url https://download.pytorch.org/whl/cpu \
+    --index-url https://mirrors.aliyun.com/pytorch-wheels/cpu \
     --extra-index-url https://mirrors.aliyun.com/pypi/simple/ \
     --progress-bar on --retries 1 --timeout 15
 
@@ -204,7 +204,7 @@ if ! python -c "import vllm" 2>/dev/null; then
         info "Using pre-downloaded oneDNN: $VLLM_SRC/.deps/onednn-src"
     fi
     pip install -v --isolated -e "$VLLM_SRC" --no-build-isolation --no-deps \
-        --index-url https://download.pytorch.org/whl/cpu \
+        --index-url https://mirrors.aliyun.com/pytorch-wheels/cpu \
         --extra-index-url https://mirrors.aliyun.com/pypi/simple/ \
         --progress-bar on --retries 1 --timeout 15
     pass "vLLM installed: $(python -c 'import vllm; print(vllm.__version__)')"

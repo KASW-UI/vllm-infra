@@ -1,4 +1,4 @@
---index-url https://download.pytorch.org/whl/cpu
+--index-url https://mirrors.aliyun.com/pytorch-wheels/cpu
 
 # Build
 cmake==3.31.10

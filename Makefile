@@ -94,14 +94,14 @@ clean:
 lock:
 	@echo "==> Generating requirements.lock"
 	uv pip compile env/requirements.in \
-		--index-url https://download.pytorch.org/whl/cpu \
+		--index-url https://mirrors.aliyun.com/pytorch-wheels/cpu \
 		--extra-index-url https://pypi.org/simple \
 		--index-strategy unsafe-best-match \
 		--python-version $(PYTHON_VERSION) \
 		-o env/requirements.lock
 	@echo "==> Generating requirements-hash.lock"
 	uv pip compile env/requirements.in \
-		--index-url https://download.pytorch.org/whl/cpu \
+		--index-url https://mirrors.aliyun.com/pytorch-wheels/cpu \
 		--extra-index-url https://pypi.org/simple \
 		--index-strategy unsafe-best-match \
 		--python-version $(PYTHON_VERSION) \

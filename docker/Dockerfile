@@ -52,7 +52,7 @@ RUN pip install --no-cache-dir cmake>=3.26.1
 COPY --chown=dev:dev env/requirements.lock /tmp/requirements.lock
 
 RUN pip install --no-cache-dir -r /tmp/requirements.lock \
-    --index-url https://download.pytorch.org/whl/cpu \
+    --index-url https://mirrors.aliyun.com/pytorch-wheels/cpu \
     --extra-index-url https://pypi.org/simple
 
 ENV CC=gcc-13
