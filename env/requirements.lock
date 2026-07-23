@@ -223,6 +223,7 @@ numpy==2.3.5
     # via
     #   -r env/requirements.in
     #   numba
+    #   torchvision
     #   transformers
     #   xgrammar
 packaging==26.2
@@ -251,6 +252,8 @@ pathspec==1.1.1
     #   mypy
 pexpect==4.9.0
     # via ipython
+pillow==12.3.0
+    # via torchvision
 platformdirs==4.10.1
     # via
     #   black
@@ -389,7 +392,10 @@ torch==2.11.0+cpu
     # via
     #   -r env/requirements.in
     #   compressed-tensors
+    #   torchvision
     #   xgrammar
+torchvision==0.26.0+cpu
+    # via -r env/requirements.in
 tornado==6.5.7
     # via
     #   ipykernel

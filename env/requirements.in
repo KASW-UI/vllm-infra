@@ -14,6 +14,7 @@ regex==2026.7.19
 
 # Core
 torch==2.11.0+cpu
+torchvision==0.26.0+cpu
 intel-openmp==2024.2.1
 numpy==2.3.5
 py-cpuinfo==9.0.0
