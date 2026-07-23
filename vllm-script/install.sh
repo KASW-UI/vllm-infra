@@ -18,9 +18,10 @@ RESET="\033[0m"
 BOLD="\033[1m"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VLLM_SRC="${VLLM_SRC:-$HOME/workspace/vllm}"
+VLLM_SRC="${VLLM_SRC:-/mnt/vllm}"
 VLLM_REF="${VLLM_REF:-}"
 VENV_DIR="${VENV_DIR:-$HOME/workspace/vllm-venv}"
+GITHUB_PROXY="${GITHUB_PROXY:-https://mirror.ghproxy.com/}"
 
 info()  { echo -e "${BOLD}${BLUE}[INFO]${RESET} $1"; }
 pass()  { echo -e "  ${GREEN}✔${RESET} $1"; }
@@ -38,8 +39,7 @@ echo -e "${BOLD}========================================================${RESET}
 echo
 
 if [[ $EUID -eq 0 ]]; then
-    echo "Do not run as root. Run as a normal user with sudo."
-    exit 1
+    warn "Running as root. Proceeding anyway..."
 fi
 
 OS_ID=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
@@ -73,6 +73,8 @@ info "Installing system packages..."
 
 sudo apt-get update -qq
 
+sudo apt-get install -y --no-install-recommends software-properties-common
+
 PACKAGES=(
     ca-certificates curl wget software-properties-common
     make git git-lfs
@@ -80,7 +82,7 @@ PACKAGES=(
     libssl-dev libffi-dev zlib1g-dev
     libnuma-dev libtcmalloc-minimal4 numactl
     ffmpeg libsm6 libxext6 libgl1
-    vim tmux htop btop
+    vim tmux htop
     jq ripgrep fd-find bat fzf
     zsh
     openssh-client
@@ -119,6 +121,30 @@ fi
 
 sudo apt-get install -y --no-install-recommends "${PACKAGES[@]}"
 
+if ! command -v btop &>/dev/null; then
+    BTOP_VER=1.4.0
+    BTOP_URLS=(
+        "${GITHUB_PROXY}https://github.com/aristocratos/btop/releases/download/v${BTOP_VER}/btop-x86_64-linux-musl.tbz"
+        "https://github.com/aristocratos/btop/releases/download/v${BTOP_VER}/btop-x86_64-linux-musl.tbz"
+    )
+    info "Installing btop ${BTOP_VER}..."
+    FOUND_BTOP=false
+    for url in "${BTOP_URLS[@]}"; do
+        if curl -fSL --retry 2 -o /tmp/btop.tbz "$url" 2>/dev/null; then
+            tar xf /tmp/btop.tbz -C /tmp
+            sudo mv /tmp/btop/bin/btop /usr/local/bin/btop
+            rm -f /tmp/btop.tbz
+            FOUND_BTOP=true
+            break
+        fi
+    done
+    if $FOUND_BTOP; then
+        pass "btop ${BTOP_VER} installed"
+    else
+        warn "btop download failed, skipping"
+    fi
+fi
+
 install_gcc
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/$CC_BIN 100 2>/dev/null || true
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/$CXX_BIN 100 2>/dev/null || true
@@ -137,13 +163,14 @@ if [[ ! -d "$VENV_DIR" ]]; then
 fi
 
 source "$VENV_DIR/bin/activate"
-pip install --upgrade pip setuptools wheel -q
-pip install cmake>=3.26.1 -q
+pip install -v --isolated --upgrade pip setuptools wheel --progress-bar on --retries 1 --timeout 15 --index-url https://mirrors.aliyun.com/pypi/simple/
+pip install -v --isolated cmake>=3.26.1 --no-deps --progress-bar on --retries 1 --timeout 15 --index-url https://mirrors.aliyun.com/pypi/simple/
 
 info "Installing Python dependencies (this takes a few minutes)..."
-pip install -r "$SCRIPT_DIR/env/requirements.lock" \
+pip install -v --isolated -r "$SCRIPT_DIR/env/requirements.lock" \
     --index-url https://download.pytorch.org/whl/cpu \
-    --extra-index-url https://pypi.org/simple -q
+    --extra-index-url https://mirrors.aliyun.com/pypi/simple/ \
+    --progress-bar on --retries 1 --timeout 15
 
 pass "Python dependencies installed"
 
@@ -159,17 +186,27 @@ if [[ ! -d "$VLLM_SRC" ]]; then
         CLONE_ARGS="--branch $VLLM_REF --depth 1"
     fi
     info "Cloning vLLM source..."
-    git clone $CLONE_ARGS https://github.com/vllm-project/vllm.git "$VLLM_SRC"
+    if ! git clone $CLONE_ARGS "${GITHUB_PROXY}https://github.com/vllm-project/vllm.git" "$VLLM_SRC" 2>/dev/null; then
+        git clone $CLONE_ARGS https://github.com/vllm-project/vllm.git "$VLLM_SRC"
+    fi
 fi
 
 if ! python -c "import vllm" 2>/dev/null; then
     info "Building vLLM (CPU only, ~10-15 minutes)..."
+    export VLLM_VERSION_OVERRIDE=0.1.0
     export CC="$CC_BIN"
     export CXX="$CXX_BIN"
     export VLLM_TARGET_DEVICE=cpu
     export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
     export MAX_JOBS=$(nproc)
-    pip install -e "$VLLM_SRC" --no-build-isolation -q
+    if [[ -d "$VLLM_SRC/.deps/onednn-src" ]]; then
+        export FETCHCONTENT_SOURCE_DIR_ONEDNN="$VLLM_SRC/.deps/onednn-src"
+        info "Using pre-downloaded oneDNN: $VLLM_SRC/.deps/onednn-src"
+    fi
+    pip install -v --isolated -e "$VLLM_SRC" --no-build-isolation --no-deps \
+        --index-url https://download.pytorch.org/whl/cpu \
+        --extra-index-url https://mirrors.aliyun.com/pypi/simple/ \
+        --progress-bar on --retries 1 --timeout 15
     pass "vLLM installed: $(python -c 'import vllm; print(vllm.__version__)')"
 else
     pass "vLLM already installed: $(python -c 'import vllm; print(vllm.__version__)')"
@@ -181,8 +218,8 @@ fi
 
 info "Installing opencode..."
 
-if command -v opencode &>/dev/null; then
-    pass "opencode already installed: $(opencode --version)"
+if test -x "$HOME/.local/bin/opencode"; then
+    pass "opencode already installed: $($HOME/.local/bin/opencode --version)"
 else
     OPENCODE_DIR="$HOME/.local/bin"
     OPENCODE_CFG="$HOME/.config/opencode"
@@ -190,16 +227,26 @@ else
 
     FOUND=false
 
-    # 1) Official installer
-    if curl -fsSL https://opencode.ai/install | bash; then
+    # 1) Prefer bundled binary
+    if [[ -f "$SCRIPT_DIR/bundle/opencode" ]]; then
+        cp "$SCRIPT_DIR/bundle/opencode" "$OPENCODE_DIR/opencode"
+        chmod +x "$OPENCODE_DIR/opencode"
+        if [[ -d "$SCRIPT_DIR/bundle/skills" ]]; then
+            cp -r "$SCRIPT_DIR/bundle/skills" "$OPENCODE_CFG/skills"
+        fi
+        if [[ -f "$SCRIPT_DIR/bundle/opencode.jsonc" ]]; then
+            cp "$SCRIPT_DIR/bundle/opencode.jsonc" "$OPENCODE_CFG/opencode.jsonc"
+        fi
         FOUND=true
-        pass "opencode installed via official installer"
+        pass "opencode installed from bundle"
     fi
 
     # 2) Fallback: download from GitHub Releases
     if ! $FOUND; then
         OPENCODE_VER="1.18.4"
         for url in \
+            "${GITHUB_PROXY}https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
+            "${GITHUB_PROXY}https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64" \
             "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-amd64" \
             "https://github.com/opencode-ai/opencode/releases/download/v${OPENCODE_VER}/opencode-linux-x64"; do
             if curl -fSL --retry 2 -o "$OPENCODE_DIR/opencode" "$url" 2>/dev/null; then
@@ -212,15 +259,7 @@ else
     fi
 
     if ! $FOUND; then
-        warn "opencode not available (no network), skipping"
-    fi
-
-    # Copy bundled skills and config
-    if [[ -d "$SCRIPT_DIR/bundle/skills" ]]; then
-        cp -r "$SCRIPT_DIR/bundle/skills" "$OPENCODE_CFG/skills"
-    fi
-    if [[ -f "$SCRIPT_DIR/bundle/opencode.jsonc" ]]; then
-        cp "$SCRIPT_DIR/bundle/opencode.jsonc" "$OPENCODE_CFG/opencode.jsonc"
+        warn "opencode not available (no bundle, no network), skipping"
     fi
 fi
 
@@ -250,8 +289,9 @@ EOF
 cat > "$CONFIG_DIR/vllm.env" <<'EOF'
 # vLLM CPU serving
 LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4:$(python -c 'import intel_openmp; print(intel_openmp.__file__.replace("__init__.py","../lib/libiomp5.so"))' 2>/dev/null || echo "")
-VLLM_CPU_KVCACHE_SPACE=4
+  VLLM_CPU_KVCACHE_SPACE=4
 VLLM_CPU_OMP_THREADS_BIND=0
+VLLM_TARGET_DEVICE=cpu
 EOF
 
 cat > "$CONFIG_DIR/docker.env" <<EOF
@@ -274,6 +314,7 @@ SHELL_SNIPPET='
 # >>> vllm-infra >>>
 export PATH="'"$VENV_DIR"'/bin:'"$HOME"'/.local/bin:$PATH"
 source "'"$VENV_DIR"'/bin/activate" 2>/dev/null
+export VLLM_TARGET_DEVICE=cpu
 alias serve="bash '"$CONFIG_DIR"'/scripts/serve.sh"
 alias bench="bash '"$CONFIG_DIR"'/scripts/bench.sh"
 alias verify="bash '"$CONFIG_DIR"'/scripts/verify.sh"
@@ -326,7 +367,7 @@ echo "  Python:       $(python --version 2>&1)"
 echo "  torch:        $(python -c 'import torch; print(torch.__version__)' 2>/dev/null || echo 'N/A')"
 echo "  vLLM:         $(python -c 'import vllm; print(vllm.__version__)' 2>/dev/null || echo 'pending')"
 echo "  gcc:          $(gcc --version 2>/dev/null | head -1 || echo 'N/A')"
-echo "  opencode:     $(command -v opencode &>/dev/null && opencode --version || echo 'not installed')"
+echo "  opencode:     $(test -x "$HOME/.local/bin/opencode" && "$HOME/.local/bin/opencode" --version || echo 'not installed')"
 echo
 echo "Quick start:"
 echo "  source ~/.zshrc          # load environment"
