@@ -50,6 +50,9 @@ click==8.4.2
     # via
     #   black
     #   huggingface-hub
+    #   uvicorn
+cloudpickle==3.1.2
+    # via -r env/requirements.in
 cmake==3.31.10
     # via -r env/requirements.in
 comm==0.2.3
@@ -79,7 +82,9 @@ fsspec==2026.6.0
     #   huggingface-hub
     #   torch
 h11==0.16.0
-    # via httpcore
+    # via
+    #   httpcore
+    #   uvicorn
 hf-xet==1.5.2
     # via huggingface-hub
 httpcore==1.0.9
@@ -458,6 +463,8 @@ uri-template==1.3.0
     # via jsonschema
 urllib3==2.7.0
     # via requests
+uvicorn==0.51.0
+    # via -r env/requirements.in
 vcs-versioning==2.2.2
     # via setuptools-scm
 wcwidth==0.8.2
