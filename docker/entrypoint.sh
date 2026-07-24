@@ -13,11 +13,17 @@ if [[ -f /workspace/vllm/setup.py || -f /workspace/vllm/pyproject.toml ]]; then
             export FETCHCONTENT_SOURCE_DIR_ONEDNN=/workspace/vllm/.deps/onednn-src
             echo "[entrypoint] Using pre-downloaded oneDNN"
         fi
+        export VLLM_VERSION_OVERRIDE=0.1.0
+        export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+        export MAX_JOBS=$(nproc)
         echo "[entrypoint] Installing vLLM as editable..."
-        VLLM_TARGET_DEVICE=cpu pip install -e /workspace/vllm --no-build-isolation \
+        if VLLM_TARGET_DEVICE=cpu pip install -e /workspace/vllm --no-build-isolation \
             --index-url https://download.pytorch.org/whl/cpu \
-            --extra-index-url https://mirrors.aliyun.com/pypi/simple/
-        echo "[entrypoint] vLLM installed."
+            --extra-index-url https://mirrors.aliyun.com/pypi/simple/; then
+            echo "[entrypoint] vLLM installed."
+        else
+            echo "[entrypoint] vLLM install FAILED. Run 'docker logs vllm-node' for details."
+        fi
     fi
 fi
 
