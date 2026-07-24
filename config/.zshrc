@@ -28,3 +28,6 @@ setopt HIST_IGNORE_SPACE
 
 # Prompt
 PROMPT='%F{cyan}%n@vllm-dev%f:%F{blue}%~%f $ '
+
+# Dependency check on shell start
+bash /workspace/scripts/welcome.sh
