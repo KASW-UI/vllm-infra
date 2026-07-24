@@ -9,6 +9,10 @@ source /home/dev/.config/cpu-vllm-infra/docker.env 2>/dev/null || true
 
 if [[ -f /workspace/vllm/setup.py || -f /workspace/vllm/pyproject.toml ]]; then
     if ! python -c "from vllm import LLM" 2>/dev/null; then
+        if [[ -d /workspace/vllm/.deps/onednn-src ]]; then
+            export FETCHCONTENT_SOURCE_DIR_ONEDNN=/workspace/vllm/.deps/onednn-src
+            echo "[entrypoint] Using pre-downloaded oneDNN"
+        fi
         echo "[entrypoint] Installing vLLM as editable..."
         VLLM_TARGET_DEVICE=cpu pip install -e /workspace/vllm --no-build-isolation \
             --index-url https://download.pytorch.org/whl/cpu \
