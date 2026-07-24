@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+source /home/dev/.config/cpu-vllm-infra/torch.env 2>/dev/null || true
+source /home/dev/.config/cpu-vllm-infra/vllm.env 2>/dev/null || true
+source /home/dev/.config/cpu-vllm-infra/docker.env 2>/dev/null || true
+
 GREEN="\033[32m"
 RED="\033[31m"
 YELLOW="\033[33m"
