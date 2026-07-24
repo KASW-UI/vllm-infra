@@ -10,7 +10,7 @@ services:
       memlock: -1
       stack: 67108864
     volumes:
-      - /home/kasw/文档/GitHub/GPU-Project/vllm:/workspace/vllm
+      - /home/kasw/文档/GitHub/cpu-vllm:/workspace/vllm
       - ~/.cache/huggingface:/home/dev/.cache/huggingface
       - ../../src:/workspace/src
       - ../../scripts:/workspace/scripts
