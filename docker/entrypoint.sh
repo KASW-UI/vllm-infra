@@ -18,6 +18,7 @@ if [[ -f /workspace/vllm/setup.py || -f /workspace/vllm/pyproject.toml ]]; then
         export MAX_JOBS=$(nproc)
         echo "[entrypoint] Installing vLLM as editable..."
         if VLLM_TARGET_DEVICE=cpu pip install -e /workspace/vllm --no-build-isolation \
+            --config-settings editable_mode=compat \
             --index-url https://download.pytorch.org/whl/cpu \
             --extra-index-url https://mirrors.aliyun.com/pypi/simple/; then
             echo "[entrypoint] vLLM installed."
