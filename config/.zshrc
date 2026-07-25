@@ -4,6 +4,11 @@ export EDITOR=vim
 # Activate venv on shell start
 source /workspace/.venv/bin/activate 2>/dev/null
 
+# Environment configs (VLLM_TARGET_DEVICE, LD_PRELOAD, OMP_NUM_THREADS, etc.)
+source /home/dev/.config/cpu-vllm-infra/torch.env 2>/dev/null || true
+source /home/dev/.config/cpu-vllm-infra/vllm.env 2>/dev/null || true
+source /home/dev/.config/cpu-vllm-infra/docker.env 2>/dev/null || true
+
 # Aliases
 alias ll='ls -alh'
 alias la='ls -A'
