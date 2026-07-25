@@ -62,7 +62,7 @@ echo -e "${BOLD}[PyTorch]${RESET}"
 check "torch+cpu"     python -c "import torch; print(torch.__version__)"
 check "torchvision"   python -c "import torchvision"
 check "torchaudio"    python -c "import torchaudio"
-check "intel-openmp"  python -c "import intel_openmp"
+check "intel-openmp"  python -c "import intel_openmp" 2>/dev/null || warn "intel-openmp" "Intel only, not required on AMD"
 echo
 
 # ── vLLM ──
