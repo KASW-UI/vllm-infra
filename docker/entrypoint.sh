@@ -3,6 +3,14 @@ set -euo pipefail
 
 source /workspace/.venv/bin/activate 2>/dev/null || true
 
+# Override baked-in configs with mount (allows config updates without image rebuild)
+if [[ -f /workspace/vllm-config/torch.env ]]; then
+    cp /workspace/vllm-config/*.env /home/dev/.config/cpu-vllm-infra/ 2>/dev/null || true
+    cp -r /workspace/vllm-config/scripts/* /workspace/scripts/ 2>/dev/null || true
+    cp /workspace/vllm-config/zshrc /home/dev/.zshrc 2>/dev/null || true
+    echo "[entrypoint] Applied config from mount"
+fi
+
 source /home/dev/.config/cpu-vllm-infra/torch.env 2>/dev/null || true
 source /home/dev/.config/cpu-vllm-infra/vllm.env 2>/dev/null || true
 source /home/dev/.config/cpu-vllm-infra/docker.env 2>/dev/null || true
